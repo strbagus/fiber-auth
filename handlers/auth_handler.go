@@ -12,67 +12,6 @@ import (
 	u "github.com/strbagus/fiber-auth/utils"
 )
 
-/* func SignIn(c *fiber.Ctx) error {
-	r := new(m.UserCred)
-	if err := c.BodyParser(r); err != nil {
-		return err
-	}
-	username := r.Username
-	password := r.Password
-
-	var user m.User
-	err := d.DB.QueryRow(`SELECT uuid, username, password, fullname  FROM users WHERE username = $1`,
-		username).Scan(&user.UUID, &user.Username, &user.Password, &user.Fullname)
-	if err != nil {
-		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   err,
-			"message": "Internal server error!",
-		})
-	}
-	if !u.CheckPassword(user.Password, password) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Invalid Username or Password!",
-		})
-	}
-
-	expValue := time.Minute * 1
-	token, err := u.GenerateToken(map[string]interface{}{
-		"uid":   user.UUID,
-		"uname": user.Username,
-		"fname": user.Fullname,
-	}, expValue)
-	refExpValue := time.Minute * 3
-	refreshToken, err := u.GenerateToken(map[string]interface{}{
-		"uid": user.UUID,
-	}, expValue)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   err,
-			"message": "Interval Server Error",
-		})
-	}
-
-	refCookie := new(fiber.Cookie)
-	refCookie.Name = "refresh_token"
-	refCookie.Value = refreshToken
-	refCookie.HTTPOnly = true
-	refCookie.SameSite = "lax"
-	refCookie.Expires = time.Now().Add(refExpValue)
-
-	cookie := new(fiber.Cookie)
-	cookie.Name = "access_token"
-	cookie.Value = token
-	cookie.HTTPOnly = true
-	cookie.SameSite = "lax"
-	cookie.Expires = time.Now().Add(expValue)
-
-	c.Cookie(cookie)
-	c.Cookie(refCookie)
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user": user,
-	})
-} */
-
 func SignIn(c *fiber.Ctx) error {
 	var creds m.UserCred
 	if err := c.BodyParser(&creds); err != nil {
@@ -97,11 +36,9 @@ func SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	// Access and refresh token durations
-	accessTokenDuration := time.Minute * 1  // Typically 15 minutes
-	refreshTokenDuration := time.Minute * 3 // Typically 7 days
+	accessTokenDuration := time.Minute * 15
+	refreshTokenDuration := time.Hour * 16
 
-	// Access token
 	accessToken, err := u.GenerateToken(map[string]interface{}{
 		"uid":   user.UUID,
 		"uname": user.Username,
@@ -237,7 +174,7 @@ func RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	expiration := time.Minute * 1
+	expiration := time.Minute * 15
 	accessToken, err := u.GenerateToken(map[string]interface{}{
 		"uid":   user.UUID,
 		"uname": user.Username,
